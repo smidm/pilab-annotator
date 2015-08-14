@@ -6,7 +6,10 @@ Pinotator (Pilab-annotator)
 A tool for annotating points and rectangles in images. 
 It also helps to convert between asf and pts files.
 
+Original:
 http://code.google.com/p/pilab-annotator/
+Currently:
+http://git.gwillz.com.au/eagleeye/pilab-annotator
 
 System Support
     - On Windows, it works with full functionality
@@ -15,157 +18,157 @@ System Support
 
 Requirements:
     - PyQt4
-    - PIL (optional)
+    - PIL
 
 @author: Ismail Ari and Yunus Acikoz
+@butcher: Project EagleEye - Gwilyn Saunders, Kin Kuen Liu, Manjung Kim
 """
 
 
 import sys, os, time
-from PyQt4 import QtGui, QtCore
-from ui_mainwindow import Ui_mainWindow
+from PyQt4 import QtGui, QtCore, uic
 from xml.dom.minidom import Document
 from xml.dom import minidom
-import Image, ImageFilter, ImageChops
+from PIL import Image, ImageFilter, ImageChops
 
-dashPattern = [2,2]                                 # Dash pattern for drawing rectangles in format [line length, space]
-splashTime = 3                                      # splash screen duration in seconds
-extensions = (".png",".jpg")                        # image file extensions to filter
-currentTool = "point"                               # string to describe current tool
-modes = {"point":"click", "rectangle":"draw", "":""}    # modes for tools
-currentIndex = 0                                    # index of current image
-points = []                                         # point coordinates for images
-zoomPoints = []                                     # point coordinates for the zoomed image
-rectangles = []										# rectangle coordinates
-zoomAmount = 3                                      # the image is zoomed "zoomAmount" times
-pointWidth = 3                                      # width of the red points (is to be odd)
-# penColor = QtCore.Qt.red                            # pen color for points/rectangles
-penColor = QtGui.QColor(255,0,0)                            # pen color for points/rectangles
-warningTimeout = 10000                              # time in miliseconds to show warning message
-indicesVisible = True                               # visibility of indices of points/rectangles
-pointsVisible = True                                # visibility of points
-rectanglesVisible = True                            # visibility of rectangles
-useSmartColor = True                                # smart coloring of the points
-currentImage = []                                   # current PIL image, filtered, and probabilities extracted
-undoRedoStatus = []                                 # flags for undo/redo actions to enable/disable them
-annotationChanged = []                              # flags for images to determine changes in annotation
-lastSavedState = 0                                  # QUndoStack index for the last state that is saved
+dashPattern = [2,2]                                  # Dash pattern for drawing rectangles in format [line length, space]
+splashTime = 3                                       # splash screen duration in seconds
+extensions = (".png",".jpg")                         # image file extensions to filter
+currentTool = "point"                                # string to describe current tool
+modes = {"point":"click", "rectangle":"draw", "":""} # modes for tools
+currentIndex = 0                                     # index of current image
+points = []                                          # point coordinates for images
+zoomPoints = []                                      # point coordinates for the zoomed image
+rectangles = []                                      # rectangle coordinates
+zoomAmount = 3                                       # the image is zoomed "zoomAmount" times
+pointWidth = 3                                       # width of the red points (is to be odd)
+# penColor = QtCore.Qt.red                           # pen color for points/rectangles
+penColor = QtGui.QColor(255,0,0)                     # pen color for points/rectangles
+warningTimeout = 10000                               # time in miliseconds to show warning message
+indicesVisible = True                                # visibility of indices of points/rectangles
+pointsVisible = True                                 # visibility of points
+rectanglesVisible = True                             # visibility of rectangles
+useSmartColor = True                                 # smart coloring of the points
+currentImage = []                                    # current PIL image, filtered, and probabilities extracted
+undoRedoStatus = []                                  # flags for undo/redo actions to enable/disable them
+annotationChanged = []                               # flags for images to determine changes in annotation
+lastSavedState = 0                                   # QUndoStack index for the last state that is saved
 
 def getSmartColor(intensity):
     return min(15*intensity,255), 50, 100
 
 class CommandDragPoint(QtGui.QUndoCommand):
-	global points, zoomPoints, zoomAmount
-	def __init__(self, index, before, after, description):
-		super(CommandDragPoint, self).__init__(description)
-		self.pointList = points[index]
-		self.point1 = before
-		self.point2 = after
-		self.zoomStack = []
+    global points, zoomPoints, zoomAmount
+    def __init__(self, index, before, after, description):
+        super(CommandDragPoint, self).__init__(description)
+        self.pointList = points[index]
+        self.point1 = before
+        self.point2 = after
+        self.zoomStack = []
 
-	def redo(self):
-		try:
-			self.pointList[self.pointList.index(self.point1)] = self.point2
-			if len(self.zoomStack) > 0:
-				zoomPoints.append(self.zoomStack.pop())
-		except ValueError:
-			pass
-		
-	def undo(self):
-		try:
-			self.pointList[self.pointList.index(self.point2)] = self.point1
-			if len(zoomPoints) > 0:
-				self.zoomStack.append(zoomPoints.pop())
-		except ValueError:
-			pass
+    def redo(self):
+        try:
+            self.pointList[self.pointList.index(self.point1)] = self.point2
+            if len(self.zoomStack) > 0:
+                zoomPoints.append(self.zoomStack.pop())
+        except ValueError:
+            pass
+        
+    def undo(self):
+        try:
+            self.pointList[self.pointList.index(self.point2)] = self.point1
+            if len(zoomPoints) > 0:
+                self.zoomStack.append(zoomPoints.pop())
+        except ValueError:
+            pass
 
 class CommandDragRect(QtGui.QUndoCommand):
-	global rectangles, zoomAmount
-	def __init__(self, index, before, after, description):
-		super(CommandDragRect, self).__init__(description)
-		self.rectList = rectangles[index]
-		self.rectangle1 = before
-		self.rectangle2 = after
-		#self.zoomStack = []
+    global rectangles, zoomAmount
+    def __init__(self, index, before, after, description):
+        super(CommandDragRect, self).__init__(description)
+        self.rectList = rectangles[index]
+        self.rectangle1 = before
+        self.rectangle2 = after
+        #self.zoomStack = []
 
-	def redo(self):
-		try:
-			self.rectList[self.rectList.index(self.rectangle1)] = self.rectangle2
-			#if len(self.zoomStack) > 0:
-			#	zoomPoints.append(self.zoomStack.pop())
-		except ValueError:
-			pass
-		
-	def undo(self):
-		try:
-			self.rectList[self.rectList.index(self.rectangle2)] = self.rectangle1
-			#if len(zoomPoints) > 0:
-			#	self.zoomStack.append(zoomPoints.pop())
-		except ValueError:
-			pass
-			
+    def redo(self):
+        try:
+            self.rectList[self.rectList.index(self.rectangle1)] = self.rectangle2
+            #if len(self.zoomStack) > 0:
+            #   zoomPoints.append(self.zoomStack.pop())
+        except ValueError:
+            pass
+        
+    def undo(self):
+        try:
+            self.rectList[self.rectList.index(self.rectangle2)] = self.rectangle1
+            #if len(zoomPoints) > 0:
+            #   self.zoomStack.append(zoomPoints.pop())
+        except ValueError:
+            pass
+            
 class CommandResizeRect(QtGui.QUndoCommand):
-	global rectangles, zoomAmount
-	def __init__(self, index, before, after, description):
-		super(CommandResizeRect, self).__init__(description)
-		self.rectList = rectangles[index]
-		self.rectangle1 = before
-		self.rectangle2 = after
-		#self.zoomStack = []
+    global rectangles, zoomAmount
+    def __init__(self, index, before, after, description):
+        super(CommandResizeRect, self).__init__(description)
+        self.rectList = rectangles[index]
+        self.rectangle1 = before
+        self.rectangle2 = after
+        #self.zoomStack = []
 
-	def redo(self):
-		try:
-			self.rectList[self.rectList.index(self.rectangle1)] = self.rectangle2
-			#if len(self.zoomStack) > 0:
-			#	zoomPoints.append(self.zoomStack.pop())
-		except ValueError:
-			pass
-		
-	def undo(self):
-		try:
-			self.rectList[self.rectList.index(self.rectangle2)] = self.rectangle1
-			#if len(zoomPoints) > 0:
-			#	self.zoomStack.append(zoomPoints.pop())
-		except ValueError:
-			pass
+    def redo(self):
+        try:
+            self.rectList[self.rectList.index(self.rectangle1)] = self.rectangle2
+            #if len(self.zoomStack) > 0:
+            #   zoomPoints.append(self.zoomStack.pop())
+        except ValueError:
+            pass
+        
+    def undo(self):
+        try:
+            self.rectList[self.rectList.index(self.rectangle2)] = self.rectangle1
+            #if len(zoomPoints) > 0:
+            #   self.zoomStack.append(zoomPoints.pop())
+        except ValueError:
+            pass
 
 class CommandAddPoint(QtGui.QUndoCommand):
-	global points, zoomPoints, zoomAmount
-	def __init__(self, index, point, description):
-		super(CommandAddPoint, self).__init__(description)
-		self.pointList = points[index]
-		self.point = point
-		self.zoomStack = []
+    global points, zoomPoints, zoomAmount
+    def __init__(self, index, point, description):
+        super(CommandAddPoint, self).__init__(description)
+        self.pointList = points[index]
+        self.point = point
+        self.zoomStack = []
 
-	def redo(self):
-		self.pointList.append(self.point)
-		if len(self.zoomStack) > 0:
-			zoomPoints.append(self.zoomStack.pop())
-		
-	def undo(self):
-		self.pointList.pop()
-		if len(zoomPoints) > 0:
-			self.zoomStack.append(zoomPoints.pop())
-		#del item 	
+    def redo(self):
+        self.pointList.append(self.point)
+        if len(self.zoomStack) > 0:
+            zoomPoints.append(self.zoomStack.pop())
+        
+    def undo(self):
+        self.pointList.pop()
+        if len(zoomPoints) > 0:
+            self.zoomStack.append(zoomPoints.pop())
+        #del item   
 
 class CommandAddRect(QtGui.QUndoCommand):
-	global rectangles, zoomAmount
-	def __init__(self, index, rectangle, description):
-		super(CommandAddRect, self).__init__(description)
-		self.rectList = rectangles[index]
-		self.rectangle = rectangle
-		#self.zoomStack = []
+    global rectangles, zoomAmount
+    def __init__(self, index, rectangle, description):
+        super(CommandAddRect, self).__init__(description)
+        self.rectList = rectangles[index]
+        self.rectangle = rectangle
+        #self.zoomStack = []
 
-	def redo(self):
-		self.rectList.append(self.rectangle)
-		#if len(self.zoomStack) > 0:
-			#zoomPoints.append(self.zoomStack.pop())
-		
-	def undo(self):
-		self.rectList.pop()
-		#if len(zoomPoints) > 0:
-			#self.zoomStack.append(zoomPoints.pop())
-		#del item		
+    def redo(self):
+        self.rectList.append(self.rectangle)
+        #if len(self.zoomStack) > 0:
+            #zoomPoints.append(self.zoomStack.pop())
+        
+    def undo(self):
+        self.rectList.pop()
+        #if len(zoomPoints) > 0:
+            #self.zoomStack.append(zoomPoints.pop())
+        #del item       
     
 class MainWindow(QtGui.QMainWindow):
     def __init__(self):
@@ -173,31 +176,30 @@ class MainWindow(QtGui.QMainWindow):
         QtGui.QMainWindow.__init__(self)
 
         # Set up the user interface from Designer.
-        self.ui = Ui_mainWindow()
-        self.ui.setupUi(self)
+        self.ui = uic.loadUi('annotator.ui', self)
         self.setCentralWidget(self.ui.scrollArea)
-		
+        
         self.pModeButtonGroup = QtGui.QButtonGroup(self)
         self.pModeButtonGroup.addButton(self.ui.dotClickButton)
         self.pModeButtonGroup.addButton(self.ui.dotDragButton)
-		
+        
         self.rModeButtonGroup = QtGui.QButtonGroup(self)
         self.rModeButtonGroup.addButton(self.ui.rectClickButton)
         self.rModeButtonGroup.addButton(self.ui.rectDragButton)
-		
+        
         self.toolButtonGroup = QtGui.QButtonGroup(self)
         self.toolButtonGroup.addButton(self.ui.dotButton)
         self.toolButtonGroup.addButton(self.ui.rectangleButton)
-		
+        
         self.undoStacks = []
         self.connectSignals()
 
         if currentTool=="point":
-			self.ui.rectClickButton.hide()
-			self.ui.rectDragButton.hide()
+            self.ui.rectClickButton.hide()
+            self.ui.rectDragButton.hide()
         else:
-			self.ui.dotClickButton.hide()
-			self.ui.dotDragButton.hide()
+            self.ui.dotClickButton.hide()
+            self.ui.dotDragButton.hide()
         
         self.ui.saveAction.setEnabled(False)
 
@@ -206,7 +208,7 @@ class MainWindow(QtGui.QMainWindow):
         self.resizeReady = False
         self.resizeIsActive = False
         self.resizeType = ""
-		
+        
         self.ui.indicesAction.setChecked(indicesVisible)
         self.ui.pointsAction.setChecked(pointsVisible)
         self.ui.rectanglesAction.setChecked(rectanglesVisible)
@@ -224,7 +226,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.ui.image.paint = QtGui.QPainter()
         self.ui.image.pen = QtGui.QPen(penColor)
-		
+        
         self.rectPen = QtGui.QPen(penColor)
         self.rectPen.setDashPattern(dashPattern)
         #self.rectPen.setWidth(pointWidth-1)
@@ -254,10 +256,10 @@ class MainWindow(QtGui.QMainWindow):
     def mainKeyReleaseEvent(self, event):
         if event.key() == QtCore.Qt.Key_Shift and modes[currentTool]=="tempDrag":
             if self.ui.image.pixmap() and (currentTool == "point" or currentTool == "rectangle"):
-				if (modes[currentTool] == "drag" or modes[currentTool] == "tempDrag") and self.dragIsActive:
-					annotationChanged[currentIndex] = True
-					self.ui.image.repaint()
-					self.dragIsActive = False
+                if (modes[currentTool] == "drag" or modes[currentTool] == "tempDrag") and self.dragIsActive:
+                    annotationChanged[currentIndex] = True
+                    self.ui.image.repaint()
+                    self.dragIsActive = False
             if currentTool == "point":
                 self.ui.dotClickButton.setChecked(True)
             if currentTool == "rectangle":
@@ -269,126 +271,126 @@ class MainWindow(QtGui.QMainWindow):
         x,y = event.pos().x(),event.pos().y()
         if self.dragIsActive:
             if currentTool == "point":
-				if 0 <= x < self.ui.image.width() and 0 <= y < self.ui.image.height():
-					points[currentIndex][self.pointToDrag] = (x,y)
-					self.ui.image.repaint()
+                if 0 <= x < self.ui.image.width() and 0 <= y < self.ui.image.height():
+                    points[currentIndex][self.pointToDrag] = (x,y)
+                    self.ui.image.repaint()
             elif currentTool == "rectangle":
-				(i,j,k,m) = self.beforeRect
-				deltaX,deltaY = x-self.rectDragPoint.x(),y-self.rectDragPoint.y()
-				newX,newY = i+deltaX, j+deltaY
-				if 0 <= x < self.ui.image.width() and 0 <= y < self.ui.image.height() \
-					and 0 <= newX < self.ui.image.width()-k and 0 <= newY < self.ui.image.height()-m:
-						rectangles[currentIndex][self.rectToDrag] = (newX,newY,k,m)
-						self.ui.image.repaint()
-						
+                (i,j,k,m) = self.beforeRect
+                deltaX,deltaY = x-self.rectDragPoint.x(),y-self.rectDragPoint.y()
+                newX,newY = i+deltaX, j+deltaY
+                if 0 <= x < self.ui.image.width() and 0 <= y < self.ui.image.height() \
+                    and 0 <= newX < self.ui.image.width()-k and 0 <= newY < self.ui.image.height()-m:
+                        rectangles[currentIndex][self.rectToDrag] = (newX,newY,k,m)
+                        self.ui.image.repaint()
+                        
         elif self.resizeIsActive:
-			(i,j,w,h) = rectangles[currentIndex][self.rectToResize]
-			if self.resizeType == "upleft":
-				deltaX,deltaY = x-i, y-j
-				newX, newY = x,y
-				newWidth, newHeight = w-deltaX,h-deltaY
-				#rectangles[currentIndex][self.rectToResize] = (x,y,w-deltaX,h-deltaY)
-			elif self.resizeType == "downleft":
-				deltaX,deltaY = x-i, y-j-h
-				newX, newY = i+deltaX, j
-				newWidth, newHeight = w-deltaX,h+deltaY
-				#rectangles[currentIndex][self.rectToResize] = (i+deltaX,j,w-deltaX,h+deltaY)
-			elif self.resizeType == "upright":
-				deltaX,deltaY = x-i-w, y-j
-				newX, newY = i,j+deltaY
-				newWidth, newHeight = w+deltaX,h-deltaY
-				#rectangles[currentIndex][self.rectToResize] = (i,j+deltaY,w+deltaX,h-deltaY)
-			elif self.resizeType == "downright":
-				deltaX,deltaY = x-i-w, y-j-h
-				newX, newY = i,j
-				newWidth, newHeight = w+deltaX,h+deltaY
-				#rectangles[currentIndex][self.rectToResize] = (i,j,w+deltaX,h+deltaY)
-			elif self.resizeType == "left":
-				deltaX = x-i
-				newX, newY = i+deltaX,j
-				newWidth, newHeight = w-deltaX,h
-				#rectangles[currentIndex][self.rectToResize] = (i+deltaX,j,w-deltaX,h)
-			elif self.resizeType == "right":
-				deltaX = x-i-w
-				newX, newY = i,j
-				newWidth, newHeight = w+deltaX,h
-				#rectangles[currentIndex][self.rectToResize] = (i,j,w+deltaX,h)
-			elif self.resizeType == "up":
-				deltaY = y-j
-				newX, newY = i,j+deltaY
-				newWidth, newHeight = w,h-deltaY
-				#rectangles[currentIndex][self.rectToResize] = (i,j+deltaY,w,h-deltaY)
-			elif self.resizeType == "down":
-				deltaY = y-j-h
-				newX, newY = i,j
-				newWidth, newHeight = w,h+deltaY
-				#rectangles[currentIndex][self.rectToResize] = (i,j,w,h+deltaY)
-			#if newWidth < 0:
-			#	newX -= newWidth
-			#	newWidth = abs(newWidth)
-			#if newHeight < 0:
-			#	newY += newHeight
-			#	newHeight = abs(newHeight)
-			rectangles[currentIndex][self.rectToResize] = (newX,newY,newWidth,newHeight)
-			self.ui.image.repaint()
-						
+            (i,j,w,h) = rectangles[currentIndex][self.rectToResize]
+            if self.resizeType == "upleft":
+                deltaX,deltaY = x-i, y-j
+                newX, newY = x,y
+                newWidth, newHeight = w-deltaX,h-deltaY
+                #rectangles[currentIndex][self.rectToResize] = (x,y,w-deltaX,h-deltaY)
+            elif self.resizeType == "downleft":
+                deltaX,deltaY = x-i, y-j-h
+                newX, newY = i+deltaX, j
+                newWidth, newHeight = w-deltaX,h+deltaY
+                #rectangles[currentIndex][self.rectToResize] = (i+deltaX,j,w-deltaX,h+deltaY)
+            elif self.resizeType == "upright":
+                deltaX,deltaY = x-i-w, y-j
+                newX, newY = i,j+deltaY
+                newWidth, newHeight = w+deltaX,h-deltaY
+                #rectangles[currentIndex][self.rectToResize] = (i,j+deltaY,w+deltaX,h-deltaY)
+            elif self.resizeType == "downright":
+                deltaX,deltaY = x-i-w, y-j-h
+                newX, newY = i,j
+                newWidth, newHeight = w+deltaX,h+deltaY
+                #rectangles[currentIndex][self.rectToResize] = (i,j,w+deltaX,h+deltaY)
+            elif self.resizeType == "left":
+                deltaX = x-i
+                newX, newY = i+deltaX,j
+                newWidth, newHeight = w-deltaX,h
+                #rectangles[currentIndex][self.rectToResize] = (i+deltaX,j,w-deltaX,h)
+            elif self.resizeType == "right":
+                deltaX = x-i-w
+                newX, newY = i,j
+                newWidth, newHeight = w+deltaX,h
+                #rectangles[currentIndex][self.rectToResize] = (i,j,w+deltaX,h)
+            elif self.resizeType == "up":
+                deltaY = y-j
+                newX, newY = i,j+deltaY
+                newWidth, newHeight = w,h-deltaY
+                #rectangles[currentIndex][self.rectToResize] = (i,j+deltaY,w,h-deltaY)
+            elif self.resizeType == "down":
+                deltaY = y-j-h
+                newX, newY = i,j
+                newWidth, newHeight = w,h+deltaY
+                #rectangles[currentIndex][self.rectToResize] = (i,j,w,h+deltaY)
+            #if newWidth < 0:
+            #   newX -= newWidth
+            #   newWidth = abs(newWidth)
+            #if newHeight < 0:
+            #   newY += newHeight
+            #   newHeight = abs(newHeight)
+            rectangles[currentIndex][self.rectToResize] = (newX,newY,newWidth,newHeight)
+            self.ui.image.repaint()
+                        
         elif currentTool == "rectangle" and modes[currentTool] != "drag" and modes[currentTool] != "tempDrag":
-			self.resizeReady = False
-			for (i,j,k,m) in rectangles[currentIndex]:
-				if abs(x-i)<=2:
-					if abs(y-j)<=2:   #upper-left corner of rectangle
-						self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeFDiagCursor))
-						self.resizeType = "upleft"
-						self.rectToResize = rectangles[currentIndex].index((i,j,k,m))
-						self.resizeReady = True
-						break
-					elif abs(y-j-m)<=2:   #lower-left corner of rectangle
-						self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeBDiagCursor))
-						self.resizeType = "downleft"
-						self.rectToResize = rectangles[currentIndex].index((i,j,k,m))
-						self.resizeReady = True
-						break
-					elif -2<=y-j<=m+2:   #left side of rectangle
-						self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeHorCursor))
-						self.resizeType = "left"
-						self.rectToResize = rectangles[currentIndex].index((i,j,k,m))
-						self.resizeReady = True
-						break
-				elif abs(x-i-k)<=2:
-					if abs(y-j)<=2:   #upper-right corner of rectangle
-						self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeBDiagCursor))
-						self.resizeType = "upright"
-						self.rectToResize = rectangles[currentIndex].index((i,j,k,m))
-						self.resizeReady = True
-						break
-					elif abs(y-j-m)<=2:   #lower-right corner of rectangle
-						self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeFDiagCursor))
-						self.resizeType = "downright"
-						self.rectToResize = rectangles[currentIndex].index((i,j,k,m))
-						self.resizeReady = True
-						break
-					elif -2<=y-j<=m+2:   #right side of rectangle
-						self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeHorCursor))
-						self.resizeType = "right"
-						self.rectToResize = rectangles[currentIndex].index((i,j,k,m))
-						self.resizeReady = True
-						break
-				elif abs(y-j)<=2 and -2<=x-i<=k+2:   #upper side of rectangle
-					self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeVerCursor))
-					self.resizeType = "up"
-					self.rectToResize = rectangles[currentIndex].index((i,j,k,m))
-					self.resizeReady = True
-					break
-				elif abs(y-j-m)<=2 and -2<=x-i<=k+2:   #lower side of the rectangle
-					self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeVerCursor))
-					self.resizeType = "down"
-					self.rectToResize = rectangles[currentIndex].index((i,j,k,m))
-					self.resizeReady = True
-					break
-			if not self.resizeReady:
-				if self.ui.image.cursor().shape() != QtCore.Qt.CrossCursor:
-					self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.CrossCursor))
-				
+            self.resizeReady = False
+            for (i,j,k,m) in rectangles[currentIndex]:
+                if abs(x-i)<=2:
+                    if abs(y-j)<=2:   #upper-left corner of rectangle
+                        self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeFDiagCursor))
+                        self.resizeType = "upleft"
+                        self.rectToResize = rectangles[currentIndex].index((i,j,k,m))
+                        self.resizeReady = True
+                        break
+                    elif abs(y-j-m)<=2:   #lower-left corner of rectangle
+                        self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeBDiagCursor))
+                        self.resizeType = "downleft"
+                        self.rectToResize = rectangles[currentIndex].index((i,j,k,m))
+                        self.resizeReady = True
+                        break
+                    elif -2<=y-j<=m+2:   #left side of rectangle
+                        self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeHorCursor))
+                        self.resizeType = "left"
+                        self.rectToResize = rectangles[currentIndex].index((i,j,k,m))
+                        self.resizeReady = True
+                        break
+                elif abs(x-i-k)<=2:
+                    if abs(y-j)<=2:   #upper-right corner of rectangle
+                        self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeBDiagCursor))
+                        self.resizeType = "upright"
+                        self.rectToResize = rectangles[currentIndex].index((i,j,k,m))
+                        self.resizeReady = True
+                        break
+                    elif abs(y-j-m)<=2:   #lower-right corner of rectangle
+                        self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeFDiagCursor))
+                        self.resizeType = "downright"
+                        self.rectToResize = rectangles[currentIndex].index((i,j,k,m))
+                        self.resizeReady = True
+                        break
+                    elif -2<=y-j<=m+2:   #right side of rectangle
+                        self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeHorCursor))
+                        self.resizeType = "right"
+                        self.rectToResize = rectangles[currentIndex].index((i,j,k,m))
+                        self.resizeReady = True
+                        break
+                elif abs(y-j)<=2 and -2<=x-i<=k+2:   #upper side of rectangle
+                    self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeVerCursor))
+                    self.resizeType = "up"
+                    self.rectToResize = rectangles[currentIndex].index((i,j,k,m))
+                    self.resizeReady = True
+                    break
+                elif abs(y-j-m)<=2 and -2<=x-i<=k+2:   #lower side of the rectangle
+                    self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeVerCursor))
+                    self.resizeType = "down"
+                    self.rectToResize = rectangles[currentIndex].index((i,j,k,m))
+                    self.resizeReady = True
+                    break
+            if not self.resizeReady:
+                if self.ui.image.cursor().shape() != QtCore.Qt.CrossCursor:
+                    self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.CrossCursor))
+                
         if self.ui.image.pixmap():
             height, width = self.ui.zoomImage.width(), self.ui.zoomImage.height()
 
@@ -402,15 +404,15 @@ class MainWindow(QtGui.QMainWindow):
                     newY = zoomAmount * j - self.up
                     if 0 <= newX <= width and 0 <= newY <= height:
                         zoomPoints.append((newX, newY))
-						
+                        
             if self.drawingRectangle:
-				(x,y) = self.rectCoord
-				(self.tempWidth, self.tempHeight) = ((event.pos().x() - x), (event.pos().y() - y))
-				self.ui.image.repaint()
-				self.updateZoomedImage(event.pos().x(),event.pos().y())
-				self.ui.zoomImage.repaint()
+                (x,y) = self.rectCoord
+                (self.tempWidth, self.tempHeight) = ((event.pos().x() - x), (event.pos().y() - y))
+                self.ui.image.repaint()
+                self.updateZoomedImage(event.pos().x(),event.pos().y())
+                self.ui.zoomImage.repaint()
             else:
-				self.updateZoomedImage(x,y)
+                self.updateZoomedImage(x,y)
 
     def imageMousePressEvent(self, event):
         global zoomPoints, points, modes, currentTool, currentIndex
@@ -421,7 +423,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.left, self.up = self.calculateZoomBorders(x,y)
                 newX,newY = zoomAmount * x - self.left, zoomAmount * y - self.up
                 zoomPoints.append((newX, newY))
-				
+                
                 command = CommandAddPoint(currentIndex, (x,y), "Add Point @(%d-%d)" %(x,y))
                 self.undoStacks[currentIndex].push(command)
                 annotationChanged[currentIndex] = True
@@ -436,25 +438,25 @@ class MainWindow(QtGui.QMainWindow):
                         self.dragIsActive = True
                         self.beforePoint = (i,j)
                         self.afterPoint = (-1,-1)
-						
+                        
         elif self.ui.image.pixmap() and currentTool == "rectangle":
-			if modes["rectangle"] == "draw":
-				if self.resizeReady:
-					self.resizeIsActive = True
-					self.beforeRect = rectangles[currentIndex][self.rectToResize]
-				else:
-					self.drawingRectangle = True
-				self.rectCoord = (x,y)
-			elif modes["rectangle"] == "drag" or modes["rectangle"] == "tempDrag":
-				self.dragIsActive = False
-				for (i,j,k,m) in rectangles[currentIndex]:
-					if ((abs(x-i)<=2 or abs(x-i-k)<=2) and -2<=y-j<=m+2) or ((abs(y-j)<=2 or abs(y-j-m)<=2) and -2<=x-i<=k+2):
-						#print "x:%d y:%d i:%d j:%d w:%d h:%d" % (x,y,i,j,k+i,m+j)
-						self.rectToDrag = rectangles[currentIndex].index((i,j,k,m))
-						self.rectDragPoint = event.pos()
-						self.dragIsActive = True
-						self.beforeRect = (i,j,k,m)
-						self.afterRect = (-1,-1,-1,-1)
+            if modes["rectangle"] == "draw":
+                if self.resizeReady:
+                    self.resizeIsActive = True
+                    self.beforeRect = rectangles[currentIndex][self.rectToResize]
+                else:
+                    self.drawingRectangle = True
+                self.rectCoord = (x,y)
+            elif modes["rectangle"] == "drag" or modes["rectangle"] == "tempDrag":
+                self.dragIsActive = False
+                for (i,j,k,m) in rectangles[currentIndex]:
+                    if ((abs(x-i)<=2 or abs(x-i-k)<=2) and -2<=y-j<=m+2) or ((abs(y-j)<=2 or abs(y-j-m)<=2) and -2<=x-i<=k+2):
+                        #print "x:%d y:%d i:%d j:%d w:%d h:%d" % (x,y,i,j,k+i,m+j)
+                        self.rectToDrag = rectangles[currentIndex].index((i,j,k,m))
+                        self.rectDragPoint = event.pos()
+                        self.dragIsActive = True
+                        self.beforeRect = (i,j,k,m)
+                        self.afterRect = (-1,-1,-1,-1)
 
     def imageMouseReleaseEvent(self, event):
         global points, modes, currentTool, currentIndex
@@ -464,53 +466,53 @@ class MainWindow(QtGui.QMainWindow):
                 self.ui.image.repaint()
                 self.dragIsActive = False
                 if self.afterPoint == (-1,-1):
-					self.afterPoint = (event.pos().x(),event.pos().y())
+                    self.afterPoint = (event.pos().x(),event.pos().y())
                 command = CommandDragPoint(currentIndex, self.beforePoint, self.afterPoint, "Drag Point")
                 self.undoStacks[currentIndex].push(command)
-				
+                
         elif self.ui.image.pixmap() and currentTool == "rectangle":
-			if modes["rectangle"] == "draw":
-				if self.resizeIsActive:
-					(i,j,w,h) = rectangles[currentIndex][self.rectToResize]
-					if w < 0:
-						i += w
-						w = abs(w)
-					if h < 0:
-						j += h
-						h = abs(h)
-					rectangles[currentIndex][self.rectToResize] = self.afterRect = (i,j,w,h)
-					command = CommandResizeRect(currentIndex, self.beforeRect, self.afterRect, "Drag Rectangle")
-					self.undoStacks[currentIndex].push(command)
-					self.resizeIsActive = False
-					annotationChanged[currentIndex] = True
-					self.ui.image.repaint()
-				else:
-					(x,y) = self.rectCoord
-					width, height = (event.pos().x() - x), (event.pos().y() - y)
-					if width != 0 and height != 0:	
-						if width < 0:
-							width = abs(width)
-							x = event.pos().x()
-						if height < 0:
-							height = abs(height)
-							y = event.pos().y()
-						command = CommandAddRect(currentIndex, (x,y,width,height), "Add Rectangle @(%d-%d-%d-%d)" %(x,y,width,height))
-						self.undoStacks[currentIndex].push(command)
-						annotationChanged[currentIndex] = True
-					if self.drawingRectangle:
-						self.drawingRectangle = False
-						self.ui.image.repaint()
-			if (modes["rectangle"] == "drag" or modes["rectangle"] == "tempDrag") and self.dragIsActive:
-				annotationChanged[currentIndex] = True
-				self.ui.image.repaint()
-				self.dragIsActive = False
-				if self.afterRect == (-1,-1,-1,-1):
-					(i,j,k,m) = self.beforeRect
-					deltaX,deltaY = event.pos().x()-self.rectDragPoint.x(),event.pos().y()-self.rectDragPoint.y()
-					self.afterRect = (i+deltaX,j+deltaY,k,m)
-				command = CommandDragRect(currentIndex, self.beforeRect, self.afterRect, "Drag Rectangle")
-				self.undoStacks[currentIndex].push(command)
-				
+            if modes["rectangle"] == "draw":
+                if self.resizeIsActive:
+                    (i,j,w,h) = rectangles[currentIndex][self.rectToResize]
+                    if w < 0:
+                        i += w
+                        w = abs(w)
+                    if h < 0:
+                        j += h
+                        h = abs(h)
+                    rectangles[currentIndex][self.rectToResize] = self.afterRect = (i,j,w,h)
+                    command = CommandResizeRect(currentIndex, self.beforeRect, self.afterRect, "Drag Rectangle")
+                    self.undoStacks[currentIndex].push(command)
+                    self.resizeIsActive = False
+                    annotationChanged[currentIndex] = True
+                    self.ui.image.repaint()
+                else:
+                    (x,y) = self.rectCoord
+                    width, height = (event.pos().x() - x), (event.pos().y() - y)
+                    if width != 0 and height != 0:  
+                        if width < 0:
+                            width = abs(width)
+                            x = event.pos().x()
+                        if height < 0:
+                            height = abs(height)
+                            y = event.pos().y()
+                        command = CommandAddRect(currentIndex, (x,y,width,height), "Add Rectangle @(%d-%d-%d-%d)" %(x,y,width,height))
+                        self.undoStacks[currentIndex].push(command)
+                        annotationChanged[currentIndex] = True
+                    if self.drawingRectangle:
+                        self.drawingRectangle = False
+                        self.ui.image.repaint()
+            if (modes["rectangle"] == "drag" or modes["rectangle"] == "tempDrag") and self.dragIsActive:
+                annotationChanged[currentIndex] = True
+                self.ui.image.repaint()
+                self.dragIsActive = False
+                if self.afterRect == (-1,-1,-1,-1):
+                    (i,j,k,m) = self.beforeRect
+                    deltaX,deltaY = event.pos().x()-self.rectDragPoint.x(),event.pos().y()-self.rectDragPoint.y()
+                    self.afterRect = (i+deltaX,j+deltaY,k,m)
+                command = CommandDragRect(currentIndex, self.beforeRect, self.afterRect, "Drag Rectangle")
+                self.undoStacks[currentIndex].push(command)
+                
 
     def zoomImagePaintEvent(self, event):
         global zoomAmount, zoomPoints, pointWidth
@@ -549,9 +551,9 @@ class MainWindow(QtGui.QMainWindow):
         global points, currentIndex, currentImage
         if self.ui.image.pixmap():
             if len(annotationChanged) and annotationChanged[currentIndex]:
-            	self.setWindowTitle("%s* (%s) - pilab-annotator" % (self.ui.imageComboBox.currentText(), path))
+                self.setWindowTitle("%s* (%s) - pilab-annotator" % (self.ui.imageComboBox.currentText(), path))
             elif len(annotationChanged) and not annotationChanged[currentIndex]:
-            	self.setWindowTitle("%s (%s) - pilab-annotator" % (self.ui.imageComboBox.currentText(), path))
+                self.setWindowTitle("%s (%s) - pilab-annotator" % (self.ui.imageComboBox.currentText(), path))
             self.ui.image.pen.setWidth(pointWidth)
             self.ui.image.paint.begin(self.ui.image)
             self.ui.image.paint.setPen(self.ui.image.pen)
@@ -567,47 +569,47 @@ class MainWindow(QtGui.QMainWindow):
                     # if indicesVisible:
                         # self.ui.image.paint.drawText(i+4,j-4, QtCore.QString.number(points[currentIndex].index((i,j))))
             if self.drawingRectangle:
-				self.ui.image.paint.setPen(self.rectPen)
-				(x,y) = self.rectCoord
-				self.ui.image.paint.drawRect(x,y,self.tempWidth,self.tempHeight)
+                self.ui.image.paint.setPen(self.rectPen)
+                (x,y) = self.rectCoord
+                self.ui.image.paint.drawRect(x,y,self.tempWidth,self.tempHeight)
             if rectanglesVisible and len(rectangles)>0:
-				for index,(i,j,k,m) in enumerate(rectangles[currentIndex]):
-					self.ui.image.paint.setPen(self.rectPen)
-					self.ui.image.paint.drawRect(i,j,k,m)
-					self.ui.image.paint.drawText(i+3,j+12, QtCore.QString.number(index))
+                for index,(i,j,k,m) in enumerate(rectangles[currentIndex]):
+                    self.ui.image.paint.setPen(self.rectPen)
+                    self.ui.image.paint.drawRect(i,j,k,m)
+                    self.ui.image.paint.drawText(i+3,j+12, QtCore.QString.number(index))
             self.ui.image.paint.end()
-			
+            
     def closeEvent(self, event):
-		saveAll = False
-		for i in range(self.ui.imageComboBox.count()):
-			if annotationChanged[i]:
-				self.ui.imageComboBox.setCurrentIndex(i)
-				if saveAll:
-					self.saveAnnotations()
-					event.accept()
-				else:					
-					quit_msg = "Save changes to the annotation file of \"%s\"?" % self.ui.imageComboBox.itemText(i)
-					reply = QtGui.QMessageBox.question(self, 'Quit', quit_msg, QtGui.QMessageBox.Save | 
-														QtGui.QMessageBox.SaveAll | QtGui.QMessageBox.Discard |
-														QtGui.QMessageBox.Cancel)
-					if reply == QtGui.QMessageBox.Save:
-						self.saveAnnotations()
-						event.accept()
-					elif reply == QtGui.QMessageBox.SaveAll:
-						saveAll = True
-						self.saveAnnotations()
-						event.accept()
-					elif reply == QtGui.QMessageBox.Cancel:
-						event.ignore()
-						break
-				
-		#quit_msg = "Are you sure you want to exit the program?"
-		#reply = QtGui.QMessageBox.question(self, 'Message', quit_msg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+        saveAll = False
+        for i in range(self.ui.imageComboBox.count()):
+            if annotationChanged[i]:
+                self.ui.imageComboBox.setCurrentIndex(i)
+                if saveAll:
+                    self.saveAnnotations()
+                    event.accept()
+                else:                   
+                    quit_msg = "Save changes to the annotation file of \"%s\"?" % self.ui.imageComboBox.itemText(i)
+                    reply = QtGui.QMessageBox.question(self, 'Quit', quit_msg, QtGui.QMessageBox.Save | 
+                                                        QtGui.QMessageBox.SaveAll | QtGui.QMessageBox.Discard |
+                                                        QtGui.QMessageBox.Cancel)
+                    if reply == QtGui.QMessageBox.Save:
+                        self.saveAnnotations()
+                        event.accept()
+                    elif reply == QtGui.QMessageBox.SaveAll:
+                        saveAll = True
+                        self.saveAnnotations()
+                        event.accept()
+                    elif reply == QtGui.QMessageBox.Cancel:
+                        event.ignore()
+                        break
+                
+        #quit_msg = "Are you sure you want to exit the program?"
+        #reply = QtGui.QMessageBox.question(self, 'Message', quit_msg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
 
-		#if reply == QtGui.QMessageBox.Yes:
-		#	event.accept()
-		#else:
-		#	event.ignore()
+        #if reply == QtGui.QMessageBox.Yes:
+        #   event.accept()
+        #else:
+        #   event.ignore()
 
     def connectSignals(self):
         self.connect(self.ui.toolboxAction, QtCore.SIGNAL("triggered(bool)"), 
@@ -718,52 +720,52 @@ class MainWindow(QtGui.QMainWindow):
                 self.ui.coord.setText("")
                 if len(imageFiles) > 0:
                     for imageFile in imageFiles:
-						objects = []
-						try:
-							annotationFile = os.path.join(path, os.path.splitext(imageFile)[0] + ".xml") # @TODO: hardcoded extension!
-							xmldoc = minidom.parse(annotationFile)
-							objects = xmldoc.getElementsByTagName("objects")			
-						except:
-							points.append([])
-							rectangles.append([])
-						else:
-							pts = []
-							rects = []
-							pointsOK = True
-							rectsOK = True
+                        objects = []
+                        try:
+                            annotationFile = os.path.join(path, os.path.splitext(imageFile)[0] + ".xml") # @TODO: hardcoded extension!
+                            xmldoc = minidom.parse(annotationFile)
+                            objects = xmldoc.getElementsByTagName("objects")            
+                        except:
+                            points.append([])
+                            rectangles.append([])
+                        else:
+                            pts = []
+                            rects = []
+                            pointsOK = True
+                            rectsOK = True
 
-							for object in objects:
-								lines = object.childNodes[1].data.splitlines()
-								if object.attributes["type"].value == "points":
-									try:
-										for line in lines:
-											(x,y) = line.split(' ')
-											pts.append((int(x), int(y)))
-									except:
-										points.append([])
-										pointsOK = False
-								elif object.attributes["type"].value == "rectangles":
-									try:
-										for line in lines:
-											(x,y,z,t) = line.split(' ')   # @TODO: uncomment when rectangle is implemented
-											rects.append((int(x), int(y), int(z), int(t)))	
-									except:
-										rectangles.append([])
-										rectsOK = False
-							if pointsOK:
-								points.append(pts)
-							if rectsOK:
-								rectangles.append(rects)
+                            for object in objects:
+                                lines = object.childNodes[1].data.splitlines()
+                                if object.attributes["type"].value == "points":
+                                    try:
+                                        for line in lines:
+                                            (x,y) = line.split(' ')
+                                            pts.append((int(x), int(y)))
+                                    except:
+                                        points.append([])
+                                        pointsOK = False
+                                elif object.attributes["type"].value == "rectangles":
+                                    try:
+                                        for line in lines:
+                                            (x,y,z,t) = line.split(' ')   # @TODO: uncomment when rectangle is implemented
+                                            rects.append((int(x), int(y), int(z), int(t)))  
+                                    except:
+                                        rectangles.append([])
+                                        rectsOK = False
+                            if pointsOK:
+                                points.append(pts)
+                            if rectsOK:
+                                rectangles.append(rects)
 
-						undoRedoStatus.append([False,False])
-						annotationChanged.append(False)
-						self.stack = QtGui.QUndoStack(self)
-						self.undoStacks.append(self.stack)
+                        undoRedoStatus.append([False,False])
+                        annotationChanged.append(False)
+                        self.stack = QtGui.QUndoStack(self)
+                        self.undoStacks.append(self.stack)
 
                         #self.connect(self.undoStacks[-1], QtCore.SIGNAL("indexChanged(int)"), self.ui.image, QtCore.SLOT("repaint()"))
-						self.connect(self.undoStacks[-1], QtCore.SIGNAL("indexChanged(int)"), self.ui.zoomImage, QtCore.SLOT("repaint()"))
-						self.connect(self.undoStacks[-1], QtCore.SIGNAL("canUndoChanged(bool)"), self.undoChange)
-						self.connect(self.undoStacks[-1], QtCore.SIGNAL("canRedoChanged(bool)"), self.redoChange)
+                        self.connect(self.undoStacks[-1], QtCore.SIGNAL("indexChanged(int)"), self.ui.zoomImage, QtCore.SLOT("repaint()"))
+                        self.connect(self.undoStacks[-1], QtCore.SIGNAL("canUndoChanged(bool)"), self.undoChange)
+                        self.connect(self.undoStacks[-1], QtCore.SIGNAL("canRedoChanged(bool)"), self.redoChange)
                         #self.connect(self.undoStacks[-1], QtCore.SIGNAL("canUndoChanged(bool)"), self.ui.undoAction.setEnabled)
                         #self.connect(self.undoStacks[-1], QtCore.SIGNAL("canRedoChanged(bool)"), self.ui.redoAction.setEnabled)
                             
@@ -791,17 +793,17 @@ class MainWindow(QtGui.QMainWindow):
         
         annotation = doc.createElement("annotation")
         doc.appendChild(annotation)
-		
+        
         objects = doc.createElement("objects")
         objects.setAttribute("type", "points")
         objects.setAttribute("count", "%.0f" % len(points[currentIndex]))
         annotation.appendChild(objects)
-		
+        
         text = ""
         for (x,y) in points[currentIndex]:
             text += "%.0f %.0f\n" % (x,y)
         if text == "":
-			text = "\n"
+            text = "\n"
         cDataSection = doc.createCDATASection(text)
         objects.appendChild(cDataSection)
 
@@ -809,12 +811,12 @@ class MainWindow(QtGui.QMainWindow):
         objects.setAttribute("type", "rectangles")
         objects.setAttribute("count", "%.0f" % len(rectangles[currentIndex]))
         annotation.appendChild(objects)
-		
+        
         text = ""
         for (x,y,w,h) in rectangles[currentIndex]:
             text += "%.0f %.0f %.0f %.0f\n" % (x,y,w,h)
         if text == "":
-			text = "\n"
+            text = "\n"
         cDataSection = doc.createCDATASection(text)
         objects.appendChild(cDataSection)
 
@@ -873,7 +875,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.indexLabel.setText("(%d / %d)" % (currentIndex+1, self.ui.imageComboBox.count()))
         self.ui.image.repaint()
         self.ui.zoomImage.repaint()
-		
+        
         self.undoChange(undoRedoStatus[currentIndex][0])
         self.redoChange(undoRedoStatus[currentIndex][1])
 
@@ -882,13 +884,13 @@ class MainWindow(QtGui.QMainWindow):
         indicesVisible = check
         self.ui.image.repaint()
         self.ui.zoomImage.repaint()
-		
+        
     def showPoints(self, check):
         global pointsVisible
         pointsVisible = check
         self.ui.image.repaint()
         self.ui.zoomImage.repaint()
-		
+        
     def showRectangles(self, check):
         global rectanglesVisible
         rectanglesVisible = check
@@ -908,9 +910,9 @@ class MainWindow(QtGui.QMainWindow):
             self.showRectOptions()
 
     def handleDotUndoButton(self):
-		global points, currentIndex
-		self.undoStack.undo()
-		self.ui.image.repaint()
+        global points, currentIndex
+        self.undoStack.undo()
+        self.ui.image.repaint()
 
     def handleDotClickButton(self, check):
         if check:
@@ -923,7 +925,7 @@ class MainWindow(QtGui.QMainWindow):
             global modes
             modes["point"] = "drag"
             self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeAllCursor))
-			
+            
     def handleRectClickButton(self, check):
         if check:
             global modes
@@ -947,38 +949,38 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.rectDragButton.show()
         self.ui.dotClickButton.hide()
         self.ui.dotDragButton.hide()
-	
+    
     def undo(self):
-		global currentIndex, lastSavedState
-		self.undoStacks[currentIndex].undo()
-		if self.undoStacks[currentIndex].index() == lastSavedState:
-			annotationChanged[currentIndex] = False
-		else:
-			annotationChanged[currentIndex] = True
-		self.ui.zoomImage.repaint()
-		self.ui.image.repaint()
-		
+        global currentIndex, lastSavedState
+        self.undoStacks[currentIndex].undo()
+        if self.undoStacks[currentIndex].index() == lastSavedState:
+            annotationChanged[currentIndex] = False
+        else:
+            annotationChanged[currentIndex] = True
+        self.ui.zoomImage.repaint()
+        self.ui.image.repaint()
+        
     def redo(self):
-		global currentIndex, lastSavedState
-		self.undoStacks[currentIndex].redo()
-		if self.undoStacks[currentIndex].index() == lastSavedState:
-			annotationChanged[currentIndex] = False
-		else:
-			annotationChanged[currentIndex] = True
-		self.ui.zoomImage.repaint()
-		self.ui.image.repaint()
-	
+        global currentIndex, lastSavedState
+        self.undoStacks[currentIndex].redo()
+        if self.undoStacks[currentIndex].index() == lastSavedState:
+            annotationChanged[currentIndex] = False
+        else:
+            annotationChanged[currentIndex] = True
+        self.ui.zoomImage.repaint()
+        self.ui.image.repaint()
+    
     def undoChange(self, b):
-		global undoRedoStatus,currentIndex
-		self.ui.undoAction.setEnabled(b)
-		self.ui.undoButton.setEnabled(b)
-		undoRedoStatus[currentIndex][0] = b
-		
+        global undoRedoStatus,currentIndex
+        self.ui.undoAction.setEnabled(b)
+        self.ui.undoButton.setEnabled(b)
+        undoRedoStatus[currentIndex][0] = b
+        
     def redoChange(self, b):
-		global undoRedoStatus,currentIndex
-		self.ui.redoAction.setEnabled(b)
-		self.ui.redoButton.setEnabled(b)
-		undoRedoStatus[currentIndex][1] = b
+        global undoRedoStatus,currentIndex
+        self.ui.redoAction.setEnabled(b)
+        self.ui.redoButton.setEnabled(b)
+        undoRedoStatus[currentIndex][1] = b
 
     def calculateZoomBorders(self, mouseX, mouseY):
         left = mouseX * zoomAmount  - self.ui.zoomImage.width()/2
