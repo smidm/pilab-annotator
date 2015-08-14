@@ -179,28 +179,30 @@ class MainWindow(QtGui.QMainWindow):
         self.ui = uic.loadUi('annotator.ui', self)
         self.setCentralWidget(self.ui.scrollArea)
         
-        self.pModeButtonGroup = QtGui.QButtonGroup(self)
-        self.pModeButtonGroup.addButton(self.ui.dotClickButton)
-        self.pModeButtonGroup.addButton(self.ui.dotDragButton)
+        #self.pModeButtonGroup = QtGui.QButtonGroup(self)
+        #self.pModeButtonGroup.addButton(self.ui.dotClickButton)
+        #self.pModeButtonGroup.addButton(self.ui.dotDragButton)
         
-        self.rModeButtonGroup = QtGui.QButtonGroup(self)
-        self.rModeButtonGroup.addButton(self.ui.rectClickButton)
-        self.rModeButtonGroup.addButton(self.ui.rectDragButton)
+        #self.rModeButtonGroup = QtGui.QButtonGroup(self)
+        #self.rModeButtonGroup.addButton(self.ui.rectClickButton)
+        #self.rModeButtonGroup.addButton(self.ui.rectDragButton)
         
-        self.toolButtonGroup = QtGui.QButtonGroup(self)
-        self.toolButtonGroup.addButton(self.ui.dotButton)
-        self.toolButtonGroup.addButton(self.ui.rectangleButton)
+        #self.toolButtonGroup = QtGui.QButtonGroup(self)
+        #self.toolButtonGroup.addButton(self.ui.dotButton)
+        #self.toolButtonGroup.addButton(self.ui.rectangleButton)
         
         self.undoStacks = []
         self.connectSignals()
         
         
         if currentTool=="point":
-            self.ui.rectClickButton.hide()
-            self.ui.rectDragButton.hide()
+            self.ui.drawRectAction.setVisible(False)
+            self.ui.moveRectAction.setVisible(False)
+            self.ui.rectanglesAction.setChecked(False)
         else:
-            self.ui.dotClickButton.hide()
-            self.ui.dotDragButton.hide()
+            self.ui.drawDotsAction.setVisible(False)
+            self.ui.moveDotsAction.setVisible(False)
+            self.ui.pointsAction.setChecked(False)
         
         self.ui.saveAction.setEnabled(False)
 
@@ -620,38 +622,31 @@ class MainWindow(QtGui.QMainWindow):
 
     def connectSignals(self):
         self.ui.zoomAction.triggered.connect(self.ui.zoomBox.setVisible)
-        #self.connect(self.ui.zoomAction, QtCore.SIGNAL("triggered(bool)"),
-        #                     self.ui.zoomBox, QtCore.SLOT("setVisible(bool)"))
+        self.ui.zoomBox.visibilityChanged.connect(self.ui.zoomAction.setChecked)
+        self.ui.navigationAction.triggered.connect(self.ui.navigationBox.setVisible)
+        self.ui.navigationBox.visibilityChanged.connect(self.ui.navigationAction.setChecked)
         
-        self.connect(self.ui.zoomBox, QtCore.SIGNAL("visibilityChanged(bool)"), 
-                             self.ui.zoomAction, QtCore.SLOT("setChecked(bool)"))
-        self.connect(self.ui.navigationAction, QtCore.SIGNAL("triggered(bool)"), 
-                             self.ui.navigationBox, QtCore.SLOT("setVisible(bool)"))
-        self.connect(self.ui.navigationBox, QtCore.SIGNAL("visibilityChanged(bool)"), 
-                             self.ui.navigationAction, QtCore.SLOT("setChecked(bool)"))
-
-        self.connect(self.ui.indicesAction, QtCore.SIGNAL("triggered(bool)"), self.showIndices)
-        self.connect(self.ui.pointsAction, QtCore.SIGNAL("triggered(bool)"), self.showPoints)
-        self.connect(self.ui.rectanglesAction, QtCore.SIGNAL("triggered(bool)"), self.showRectangles)
-        self.connect(self.ui.openAction, QtCore.SIGNAL("triggered()"), self.openImageDirectory)
-        self.connect(self.ui.saveAction, QtCore.SIGNAL("triggered()"), self.saveAnnotations)
-        self.connect(self.ui.imageComboBox, QtCore.SIGNAL("currentIndexChanged(QString)"), self.changeImage)
-        self.connect(self.ui.prevButton, QtCore.SIGNAL("clicked()"), self.previousImage)
-        self.connect(self.ui.nextButton, QtCore.SIGNAL("clicked()"), self.nextImage)
-        self.connect(self.ui.plusTenButton, QtCore.SIGNAL("clicked()"), self.plusTenImage)
-        self.connect(self.ui.minusTenButton, QtCore.SIGNAL("clicked()"), self.minusTenImage)
-        self.connect(self.ui.firstButton, QtCore.SIGNAL("clicked()"), self.firstImage)
-        self.connect(self.ui.lastButton, QtCore.SIGNAL("clicked()"), self.lastImage)
-        self.connect(self.ui.dotButton, QtCore.SIGNAL("toggled(bool)"), self.handleDotButton)
-        self.connect(self.ui.rectangleButton, QtCore.SIGNAL("toggled(bool)"), self.handleRectButton)
-        self.connect(self.ui.dotClickButton, QtCore.SIGNAL("toggled(bool)"), self.handleDotClickButton)
-        self.connect(self.ui.dotDragButton, QtCore.SIGNAL("toggled(bool)"), self.handleDotDragButton)
-        self.connect(self.ui.rectClickButton, QtCore.SIGNAL("toggled(bool)"), self.handleRectClickButton)
-        self.connect(self.ui.rectDragButton, QtCore.SIGNAL("toggled(bool)"), self.handleRectDragButton)
-        self.connect(self.ui.undoButton, QtCore.SIGNAL("clicked()"), self.undo)
-        self.connect(self.ui.redoButton, QtCore.SIGNAL("clicked()"), self.redo)
-        self.connect(self.ui.undoAction, QtCore.SIGNAL("triggered()"), self.undo)
-        self.connect(self.ui.redoAction, QtCore.SIGNAL("triggered()"), self.redo)
+        self.ui.indicesAction.triggered.connect(self.showIndices)
+        self.ui.pointsAction.triggered.connect(self.showPoints)
+        self.ui.rectanglesAction.triggered.connect(self.showRectangles)
+        self.ui.openAction.triggered.connect(self.openImageDirectory)
+        self.ui.saveAction.triggered.connect(self.saveAnnotations)
+        self.ui.imageComboBox.currentIndexChanged.connect(self.changeImage)
+        self.ui.prevButton.clicked.connect(self.previousImage)
+        self.ui.nextButton.clicked.connect(self.nextImage)
+        self.ui.plusTenButton.clicked.connect(self.plusTenImage)
+        self.ui.minusTenButton.clicked.connect(self.minusTenImage)
+        self.ui.firstButton.clicked.connect(self.firstImage)
+        self.ui.lastButton.clicked.connect(self.lastImage)
+        
+        self.ui.pointsAction.triggered.connect(self.handleDotButton)
+        self.ui.rectanglesAction.triggered.connect(self.handleRectButton)
+        self.ui.drawDotsAction.toggled.connect(self.handleDotClickButton)
+        self.ui.moveDotsAction.toggled.connect(self.handleDotDragButton)
+        self.ui.drawRectAction.toggled.connect(self.handleRectClickButton)
+        self.ui.moveRectAction.toggled.connect(self.handleRectDragButton)
+        self.ui.undoAction.triggered.connect(self.undo)
+        self.ui.redoAction.triggered.connect(self.redo)
 
     def previousImage(self):
         global zoomPoints
@@ -898,17 +893,21 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.image.repaint()
         self.ui.zoomImage.repaint()
 
-    def handleDotButton(self, check):
+    def handleDotButton(self):
         global currentTool
-        if check:
-            currentTool = "point"
-            self.showDotOptions()
+        #if check:
+        currentTool = "point"
+        self.ui.rectanglesAction.setChecked(False)
+        self.ui.pointsAction.setChecked(True)
+        self.showDotOptions()
             
-    def handleRectButton(self, check):
+    def handleRectButton(self):
         global currentTool
-        if check:
-            currentTool = "rectangle"
-            self.showRectOptions()
+        #if check:
+        currentTool = "rectangle"
+        self.ui.rectanglesAction.setChecked(True)
+        self.ui.pointsAction.setChecked(False)
+        self.showRectOptions()
 
     def handleDotUndoButton(self):
         global points, currentIndex
@@ -940,16 +939,16 @@ class MainWindow(QtGui.QMainWindow):
             self.ui.image.setCursor(QtGui.QCursor(QtCore.Qt.SizeAllCursor))
 
     def showDotOptions(self):
-        self.ui.dotClickButton.show()
-        self.ui.dotDragButton.show()
-        self.ui.rectClickButton.hide()
-        self.ui.rectDragButton.hide()
+        self.ui.drawDotsAction.setVisible(True)
+        self.ui.moveDotsAction.setVisible(True)
+        self.ui.drawRectAction.setVisible(False)
+        self.ui.moveRectAction.setVisible(False)
         
     def showRectOptions(self):
-        self.ui.rectClickButton.show()
-        self.ui.rectDragButton.show()
-        self.ui.dotClickButton.hide()
-        self.ui.dotDragButton.hide()
+        self.ui.drawDotsAction.setVisible(False)
+        self.ui.moveDotsAction.setVisible(False)
+        self.ui.drawRectAction.setVisible(True)
+        self.ui.moveRectAction.setVisible(True)
     
     def undo(self):
         global currentIndex, lastSavedState
