@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>977</width>
-    <height>599</height>
+    <width>1020</width>
+    <height>602</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -33,6 +33,9 @@
   </property>
   <property name="windowTitle">
    <string>Annotator</string>
+  </property>
+  <property name="dockNestingEnabled">
+   <bool>true</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QScrollArea" name="scrollArea">
@@ -88,7 +91,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>977</width>
+     <width>1020</width>
      <height>22</height>
     </rect>
    </property>
@@ -115,8 +118,6 @@
      <property name="title">
       <string>Windows</string>
      </property>
-     <addaction name="toolboxAction"/>
-     <addaction name="optionsAction"/>
      <addaction name="zoomAction"/>
      <addaction name="navigationAction"/>
     </widget>
@@ -178,7 +179,7 @@
       <rect>
        <x>10</x>
        <y>0</y>
-       <width>91</width>
+       <width>98</width>
        <height>51</height>
       </rect>
      </property>
@@ -552,7 +553,7 @@
       <rect>
        <x>0</x>
        <y>0</y>
-       <width>151</width>
+       <width>328</width>
        <height>121</height>
       </rect>
      </property>
@@ -683,6 +684,24 @@
     </widget>
    </widget>
   </widget>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>LeftToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="pointsAction"/>
+   <addaction name="rectanglesAction"/>
+   <addaction name="separator"/>
+   <addaction name="drawDotsAction"/>
+   <addaction name="moveDotsAction"/>
+   <addaction name="drawRectAction"/>
+   <addaction name="moveRectAction"/>
+  </widget>
   <action name="openAction">
    <property name="icon">
     <iconset>
@@ -716,28 +735,6 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
-   </property>
-  </action>
-  <action name="toolboxAction">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Toolbox</string>
-   </property>
-  </action>
-  <action name="optionsAction">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Options</string>
    </property>
   </action>
   <action name="zoomAction">
@@ -810,6 +807,10 @@
    <property name="enabled">
     <bool>false</bool>
    </property>
+   <property name="icon">
+    <iconset resource="graphics.qrc">
+     <normaloff>:/undo</normaloff>:/undo</iconset>
+   </property>
    <property name="text">
     <string>Undo</string>
    </property>
@@ -820,6 +821,10 @@
   <action name="redoAction">
    <property name="enabled">
     <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="graphics.qrc">
+     <normaloff>:/redo</normaloff>:/redo</iconset>
    </property>
    <property name="text">
     <string>Redo</string>
@@ -832,6 +837,10 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset resource="graphics.qrc">
+     <normaloff>:/click-point</normaloff>:/click-point</iconset>
+   </property>
    <property name="text">
     <string>Points</string>
    </property>
@@ -843,6 +852,10 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset resource="graphics.qrc">
+     <normaloff>:/select-rectangle</normaloff>:/select-rectangle</iconset>
+   </property>
    <property name="text">
     <string>Rectangles</string>
    </property>
@@ -850,8 +863,70 @@
     <string>R</string>
    </property>
   </action>
+  <action name="drawDotsAction">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="graphics.qrc">
+     <normaloff>:/click-point-add</normaloff>:/click-point-add</iconset>
+   </property>
+   <property name="text">
+    <string>Draw</string>
+   </property>
+   <property name="toolTip">
+    <string>Draw Dots</string>
+   </property>
+  </action>
+  <action name="moveDotsAction">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="graphics.qrc">
+     <normaloff>:/move</normaloff>:/move</iconset>
+   </property>
+   <property name="text">
+    <string>Move</string>
+   </property>
+   <property name="toolTip">
+    <string>Move Dots</string>
+   </property>
+  </action>
+  <action name="moveRectAction">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="graphics.qrc">
+     <normaloff>:/move</normaloff>:/move</iconset>
+   </property>
+   <property name="text">
+    <string>Move</string>
+   </property>
+   <property name="toolTip">
+    <string>Move Rectangles</string>
+   </property>
+  </action>
+  <action name="drawRectAction">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="graphics.qrc">
+     <normaloff>:/select-rectangle-add</normaloff>:/select-rectangle-add</iconset>
+   </property>
+   <property name="text">
+    <string>Draw</string>
+   </property>
+   <property name="toolTip">
+    <string>Draw Rectangles</string>
+   </property>
+  </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="graphics.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>exitAction</sender>

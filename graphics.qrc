@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="annotator">graphics/annotator.png</file>
+        <file alias="pilab_saydam">graphics/pilab_saydam.png</file>
+        <file alias="click-point">graphics/click-point.png</file>
+        <file alias="click-point-add">graphics/click-point-add.png</file>
+        <file alias="move">graphics/move.png</file>
+        <file alias="draw-rectangle">graphics/draw-rectangle.png</file>
+        <file alias="select-rectangle">graphics/select-rectangle.png</file>
+        <file alias="select-rectangle-add">graphics/select-rectangle-add.png</file>
+        <file alias="redo">graphics/redo.png</file>
+        <file alias="redo-disabled">graphics/redo-disabled.png</file>
+        <file alias="undo">graphics/undo.png</file>
+        <file alias="undo-disabled">graphics/undo-disabled.png</file>
+    </qresource>
+</RCC>

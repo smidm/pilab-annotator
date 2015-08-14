@@ -25,7 +25,7 @@ Requirements:
 """
 
 
-import sys, os, time
+import sys, os, time, graphics_rc
 from PyQt4 import QtGui, QtCore, uic
 from xml.dom.minidom import Document
 from xml.dom import minidom
@@ -193,7 +193,8 @@ class MainWindow(QtGui.QMainWindow):
         
         self.undoStacks = []
         self.connectSignals()
-
+        
+        
         if currentTool=="point":
             self.ui.rectClickButton.hide()
             self.ui.rectDragButton.hide()
@@ -243,7 +244,13 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.image.mousePressEvent = self.imageMousePressEvent
         self.ui.image.mouseReleaseEvent = self.imageMouseReleaseEvent
         self.ui.image.mouseMoveEvent = self.imageMouseMoveEvent
-
+    
+    def setupToolbar(self):
+        self.ui.moveDotsAction.toggled.connect(self.ui.moveDotsAction.setVisible)
+        self.ui.moveDotsAction.toggled.connect(self.ui.moveDotsAction.setVisible)
+        self.ui.moveDotsAction.setVisible(False)
+        
+    
     def mainKeyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Shift and modes[currentTool] != "drag":
             if currentTool == "point":
@@ -612,16 +619,10 @@ class MainWindow(QtGui.QMainWindow):
         #   event.ignore()
 
     def connectSignals(self):
-        self.connect(self.ui.toolboxAction, QtCore.SIGNAL("triggered(bool)"), 
-                             self.ui.toolBox, QtCore.SLOT("setVisible(bool)"))
-        self.connect(self.ui.toolBox, QtCore.SIGNAL("visibilityChanged(bool)"), 
-                             self.ui.toolboxAction, QtCore.SLOT("setChecked(bool)"))
-        self.connect(self.ui.optionsAction, QtCore.SIGNAL("triggered(bool)"), 
-                             self.ui.optionBox, QtCore.SLOT("setVisible(bool)"))
-        self.connect(self.ui.optionBox, QtCore.SIGNAL("visibilityChanged(bool)"), 
-                             self.ui.optionsAction, QtCore.SLOT("setChecked(bool)"))
-        self.connect(self.ui.zoomAction, QtCore.SIGNAL("triggered(bool)"),
-                             self.ui.zoomBox, QtCore.SLOT("setVisible(bool)"))
+        self.ui.zoomAction.triggered.connect(self.ui.zoomBox.setVisible)
+        #self.connect(self.ui.zoomAction, QtCore.SIGNAL("triggered(bool)"),
+        #                     self.ui.zoomBox, QtCore.SLOT("setVisible(bool)"))
+        
         self.connect(self.ui.zoomBox, QtCore.SIGNAL("visibilityChanged(bool)"), 
                              self.ui.zoomAction, QtCore.SLOT("setChecked(bool)"))
         self.connect(self.ui.navigationAction, QtCore.SIGNAL("triggered(bool)"), 
@@ -1000,7 +1001,7 @@ class MainWindow(QtGui.QMainWindow):
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
-    pixmap = QtGui.QPixmap("graphics/annotator.png")
+    pixmap = QtGui.QPixmap(":annotator")
     splash = QtGui.QSplashScreen(pixmap)
     splash.show()
     main = MainWindow()
