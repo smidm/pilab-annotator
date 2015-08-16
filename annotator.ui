@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>862</width>
+    <width>965</width>
     <height>602</height>
    </rect>
   </property>
@@ -38,61 +38,57 @@
    <bool>true</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QScrollArea" name="scrollArea">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>0</y>
-      <width>591</width>
-      <height>511</height>
-     </rect>
-    </property>
-    <property name="sizePolicy">
-     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-      <horstretch>0</horstretch>
-      <verstretch>0</verstretch>
-     </sizepolicy>
-    </property>
-    <property name="mouseTracking">
-     <bool>false</bool>
-    </property>
-    <property name="widgetResizable">
-     <bool>true</bool>
-    </property>
-    <widget class="QWidget" name="scrollAreaWidgetContents">
-     <property name="geometry">
-      <rect>
-       <x>0</x>
-       <y>0</y>
-       <width>587</width>
-       <height>507</height>
-      </rect>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_4">
-      <item>
-       <widget class="QLabel" name="image">
-        <property name="cursor">
-         <cursorShape>CrossCursor</cursorShape>
-        </property>
-        <property name="mouseTracking">
-         <bool>true</bool>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </widget>
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <item>
+     <widget class="QScrollArea" name="scrollArea">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="mouseTracking">
+       <bool>false</bool>
+      </property>
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="scrollAreaWidgetContents">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>666</width>
+         <height>540</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <widget class="QLabel" name="image">
+          <property name="cursor">
+           <cursorShape>CrossCursor</cursorShape>
+          </property>
+          <property name="mouseTracking">
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>862</width>
-     <height>29</height>
+     <width>965</width>
+     <height>22</height>
     </rect>
    </property>
    <property name="font">
@@ -146,12 +142,6 @@
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QDockWidget" name="navigationBox">
-   <property name="minimumSize">
-    <size>
-     <width>150</width>
-     <height>50</height>
-    </size>
-   </property>
    <property name="font">
     <font>
      <pointsize>9</pointsize>
@@ -164,140 +154,189 @@
     <number>2</number>
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_6">
-    <widget class="QWidget" name="verticalLayoutWidget">
-     <property name="geometry">
-      <rect>
-       <x>0</x>
-       <y>0</y>
-       <width>364</width>
-       <height>126</height>
-      </rect>
+    <layout class="QGridLayout" name="gridLayout">
+     <property name="rightMargin">
+      <number>1</number>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <item>
-         <widget class="QPushButton" name="prevButton">
-          <property name="toolTip">
-           <string>Previous image</string>
-          </property>
-          <property name="text">
-           <string>-1</string>
-          </property>
-          <property name="shortcut">
-           <string>Left</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="nextButton">
-          <property name="toolTip">
-           <string>Next image</string>
-          </property>
-          <property name="text">
-           <string>+1</string>
-          </property>
-          <property name="shortcut">
-           <string>Right</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
-        <item>
-         <widget class="QPushButton" name="firstButton">
-          <property name="toolTip">
-           <string>First image</string>
-          </property>
-          <property name="text">
-           <string>|&lt;</string>
-          </property>
-          <property name="shortcut">
-           <string>Home</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="minusTenButton">
-          <property name="toolTip">
-           <string>10 images back</string>
-          </property>
-          <property name="text">
-           <string>&lt;&lt;</string>
-          </property>
-          <property name="shortcut">
-           <string>PgUp</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="plusTenButton">
-          <property name="toolTip">
-           <string>10 images forward</string>
-          </property>
-          <property name="text">
-           <string>&gt;&gt;</string>
-          </property>
-          <property name="shortcut">
-           <string>PgDown</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="lastButton">
-          <property name="toolTip">
-           <string>Last image</string>
-          </property>
-          <property name="text">
-           <string>&gt;|</string>
-          </property>
-          <property name="shortcut">
-           <string>End</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer_3">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <widget class="QComboBox" name="imageComboBox"/>
-      </item>
-      <item>
-       <widget class="QLabel" name="indexLabel">
-        <property name="text">
-         <string>(0 / 0)</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
+     <property name="bottomMargin">
+      <number>1</number>
+     </property>
+     <property name="horizontalSpacing">
+      <number>0</number>
+     </property>
+     <property name="verticalSpacing">
+      <number>4</number>
+     </property>
+     <item row="1" column="1">
+      <widget class="QPushButton" name="minusTenButton">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>40</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>10 images back</string>
+       </property>
+       <property name="text">
+        <string>&lt;&lt;</string>
+       </property>
+       <property name="shortcut">
+        <string>PgUp</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QPushButton" name="plusTenButton">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>40</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>10 images forward</string>
+       </property>
+       <property name="text">
+        <string>&gt;&gt;</string>
+       </property>
+       <property name="shortcut">
+        <string>PgDown</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0" colspan="4">
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QComboBox" name="imageComboBox"/>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item row="1" column="0">
+      <widget class="QPushButton" name="firstButton">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>40</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>First image</string>
+       </property>
+       <property name="text">
+        <string>|&lt;</string>
+       </property>
+       <property name="shortcut">
+        <string>Home</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QPushButton" name="lastButton">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>40</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Last image</string>
+       </property>
+       <property name="text">
+        <string>&gt;|</string>
+       </property>
+       <property name="shortcut">
+        <string>End</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0" colspan="2">
+      <widget class="QPushButton" name="prevButton">
+       <property name="toolTip">
+        <string>Previous image</string>
+       </property>
+       <property name="text">
+        <string>-1</string>
+       </property>
+       <property name="shortcut">
+        <string>Left</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2" colspan="2">
+      <widget class="QPushButton" name="nextButton">
+       <property name="toolTip">
+        <string>Next image</string>
+       </property>
+       <property name="text">
+        <string>+1</string>
+       </property>
+       <property name="shortcut">
+        <string>Right</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0" colspan="4">
+      <widget class="QLabel" name="indexLabel">
+       <property name="text">
+        <string>(0 / 0)</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0" colspan="4">
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
    </widget>
   </widget>
   <widget class="QDockWidget" name="zoomBox">
@@ -628,6 +667,16 @@
    </property>
   </action>
  </widget>
+ <tabstops>
+  <tabstop>scrollArea</tabstop>
+  <tabstop>prevButton</tabstop>
+  <tabstop>nextButton</tabstop>
+  <tabstop>firstButton</tabstop>
+  <tabstop>minusTenButton</tabstop>
+  <tabstop>plusTenButton</tabstop>
+  <tabstop>lastButton</tabstop>
+  <tabstop>imageComboBox</tabstop>
+ </tabstops>
  <resources>
   <include location="graphics.qrc"/>
  </resources>
