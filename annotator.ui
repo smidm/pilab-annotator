@@ -64,8 +64,8 @@
       <rect>
        <x>0</x>
        <y>0</y>
-       <width>589</width>
-       <height>509</height>
+       <width>587</width>
+       <height>507</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -92,7 +92,7 @@
      <x>0</x>
      <y>0</y>
      <width>862</width>
-     <height>22</height>
+     <height>29</height>
     </rect>
    </property>
    <property name="font">
@@ -145,66 +145,11 @@
    <addaction name="viewMenu"/>
    <addaction name="menuHelp"/>
   </widget>
-  <widget class="QDockWidget" name="zoomBox">
-   <property name="font">
-    <font>
-     <family>Sans Serif</family>
-     <pointsize>9</pointsize>
-    </font>
-   </property>
-   <property name="windowTitle">
-    <string>Zoom</string>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>2</number>
-   </attribute>
-   <widget class="QWidget" name="dockWidgetContents_4">
-    <layout class="QHBoxLayout" name="horizontalLayout_5">
-     <item>
-      <layout class="QVBoxLayout" name="verticalLayout_4">
-       <item>
-        <widget class="QLabel" name="zoomImage">
-         <property name="minimumSize">
-          <size>
-           <width>200</width>
-           <height>200</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>200</width>
-           <height>200</height>
-          </size>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_3">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </item>
-    </layout>
-   </widget>
-  </widget>
-  <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="navigationBox">
    <property name="minimumSize">
     <size>
      <width>150</width>
-     <height>41</height>
+     <height>50</height>
     </size>
    </property>
    <property name="font">
@@ -224,8 +169,8 @@
       <rect>
        <x>0</x>
        <y>0</y>
-       <width>328</width>
-       <height>121</height>
+       <width>364</width>
+       <height>126</height>
       </rect>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
@@ -355,6 +300,61 @@
     </widget>
    </widget>
   </widget>
+  <widget class="QDockWidget" name="zoomBox">
+   <property name="font">
+    <font>
+     <family>Sans Serif</family>
+     <pointsize>9</pointsize>
+    </font>
+   </property>
+   <property name="windowTitle">
+    <string>Zoom</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_4">
+    <layout class="QHBoxLayout" name="horizontalLayout_5">
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <widget class="QLabel" name="zoomImage">
+         <property name="minimumSize">
+          <size>
+           <width>200</width>
+           <height>200</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>200</width>
+           <height>200</height>
+          </size>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
   <widget class="QToolBar" name="toolBar">
    <property name="windowTitle">
     <string>toolBar</string>
@@ -365,8 +365,8 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="pointsAction"/>
-   <addaction name="rectanglesAction"/>
+   <addaction name="clickDotsAction"/>
+   <addaction name="clickRectAction"/>
    <addaction name="separator"/>
    <addaction name="drawDotsAction"/>
    <addaction name="moveDotsAction"/>
@@ -595,6 +595,36 @@
    </property>
    <property name="toolTip">
     <string>Draw Rectangles</string>
+   </property>
+  </action>
+  <action name="clickDotsAction">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="graphics.qrc">
+     <normaloff>:/click-point</normaloff>:/click-point</iconset>
+   </property>
+   <property name="text">
+    <string>Points</string>
+   </property>
+   <property name="toolTip">
+    <string>Select Dots</string>
+   </property>
+  </action>
+  <action name="clickRectAction">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="graphics.qrc">
+     <normaloff>:/select-rectangle</normaloff>:/select-rectangle</iconset>
+   </property>
+   <property name="text">
+    <string>Rectangles</string>
+   </property>
+   <property name="toolTip">
+    <string>Select Rectanges</string>
    </property>
   </action>
  </widget>

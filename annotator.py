@@ -198,11 +198,11 @@ class MainWindow(QtGui.QMainWindow):
         if currentTool=="point":
             self.ui.drawRectAction.setVisible(False)
             self.ui.moveRectAction.setVisible(False)
-            self.ui.rectanglesAction.setChecked(False)
+            self.ui.clickRectAction.setChecked(False)
         else:
             self.ui.drawDotsAction.setVisible(False)
             self.ui.moveDotsAction.setVisible(False)
-            self.ui.pointsAction.setChecked(False)
+            self.ui.clickDotsAction.setChecked(False)
         
         self.ui.saveAction.setEnabled(False)
 
@@ -639,8 +639,8 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.firstButton.clicked.connect(self.firstImage)
         self.ui.lastButton.clicked.connect(self.lastImage)
         
-        self.ui.pointsAction.triggered.connect(self.handleDotButton)
-        self.ui.rectanglesAction.triggered.connect(self.handleRectButton)
+        self.ui.clickDotsAction.triggered.connect(self.handleDotButton)
+        self.ui.clickRectAction.triggered.connect(self.handleRectButton)
         self.ui.drawDotsAction.toggled.connect(self.handleDotClickButton)
         self.ui.moveDotsAction.toggled.connect(self.handleDotDragButton)
         self.ui.drawRectAction.toggled.connect(self.handleRectClickButton)
@@ -720,7 +720,7 @@ class MainWindow(QtGui.QMainWindow):
                         try:
                             annotationFile = os.path.join(path, os.path.splitext(imageFile)[0] + ".xml") # @TODO: hardcoded extension!
                             xmldoc = minidom.parse(annotationFile)
-                            objects = xmldoc.getElementsByTagName("objects")            
+                            objects = xmldoc.getElementsByTagName("objects")
                         except:
                             points.append([])
                             rectangles.append([])
@@ -743,7 +743,7 @@ class MainWindow(QtGui.QMainWindow):
                                 elif object.attributes["type"].value == "rectangles":
                                     try:
                                         for line in lines:
-                                            (x,y,z,t) = line.split(' ')   # @TODO: uncomment when rectangle is implemented
+                                            (x,y,z,t) = line.split(' ')
                                             rects.append((int(x), int(y), int(z), int(t)))  
                                     except:
                                         rectangles.append([])
@@ -757,14 +757,15 @@ class MainWindow(QtGui.QMainWindow):
                         annotationChanged.append(False)
                         self.stack = QtGui.QUndoStack(self)
                         self.undoStacks.append(self.stack)
-
+                        
+                        self.undoStacks[-1].indexChanged.connect(self.ui.zoomImage.repaint)
+                        self.undoStacks[-1].canUndoChanged.connect(self.undoChange)
+                        self.undoStacks[-1].canRedoChanged.connect(self.redoChange)
+                        
                         #self.connect(self.undoStacks[-1], QtCore.SIGNAL("indexChanged(int)"), self.ui.image, QtCore.SLOT("repaint()"))
-                        self.connect(self.undoStacks[-1], QtCore.SIGNAL("indexChanged(int)"), self.ui.zoomImage, QtCore.SLOT("repaint()"))
-                        self.connect(self.undoStacks[-1], QtCore.SIGNAL("canUndoChanged(bool)"), self.undoChange)
-                        self.connect(self.undoStacks[-1], QtCore.SIGNAL("canRedoChanged(bool)"), self.redoChange)
                         #self.connect(self.undoStacks[-1], QtCore.SIGNAL("canUndoChanged(bool)"), self.ui.undoAction.setEnabled)
                         #self.connect(self.undoStacks[-1], QtCore.SIGNAL("canRedoChanged(bool)"), self.ui.redoAction.setEnabled)
-                            
+                        
                     self.ui.imageComboBox.addItems(imageFiles)
                     # self.loadImage("%s/%s" % (path, self.ui.imageComboBox.currentText()))
                     self.setWindowTitle("%s (%s) - pilab-annotator" % (self.ui.imageComboBox.currentText(), path))
@@ -977,7 +978,7 @@ class MainWindow(QtGui.QMainWindow):
         undoRedoStatus[currentIndex][0] = b
         
     def redoChange(self, b):
-        global undoRedoStatus,currentIndex
+        global undoRedoStatus,currentIndex   
         self.ui.redoAction.setEnabled(b)
         self.ui.redoButton.setEnabled(b)
         undoRedoStatus[currentIndex][1] = b
