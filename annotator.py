@@ -631,7 +631,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ui.rectanglesAction.triggered.connect(self.showRectangles)
         self.ui.openAction.triggered.connect(self.openImageDirectory)
         self.ui.saveAction.triggered.connect(self.saveAnnotations)
-        self.ui.imageComboBox.currentIndexChanged.connect(self.changeImage)
+        self.ui.imageComboBox.currentIndexChanged[str].connect(self.changeImage)
         self.ui.prevButton.clicked.connect(self.previousImage)
         self.ui.nextButton.clicked.connect(self.nextImage)
         self.ui.plusTenButton.clicked.connect(self.plusTenImage)
