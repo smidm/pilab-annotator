@@ -731,7 +731,9 @@ class MainWindow(QtGui.QMainWindow):
                             rectsOK = True
 
                             for object in objects:
-                                cdata = [n for n in object.childNodes if n.nodeType==object.CDATA_SECTION_NODE][0]
+                                if not object.hasAttribute("count") or object.attributes["count"].value == "0":
+                                    continue
+                                cdata = [n for n in object.childNodes if n.nodeType == object.CDATA_SECTION_NODE][0]
                                 lines = cdata.data.splitlines()
                                 if object.attributes["type"].value == "points":
                                     try:
